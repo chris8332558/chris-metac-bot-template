@@ -1121,6 +1121,7 @@ if __name__ == "__main__":
     else:
         open_question_id_post_id = get_open_question_ids_from_tournament()
 
+    print(f"open_question_id_post_id: {open_question_id_post_id}")
     asyncio.run(
         forecast_questions(
             open_question_id_post_id,
