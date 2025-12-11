@@ -42,10 +42,10 @@ with this file it may be worth double checking key components locally.
 
 ######################### CONSTANTS #########################
 # Constants
-SUBMIT_PREDICTION = True  # set to True to publish your predictions to Metaculus
-USE_EXAMPLE_QUESTIONS = False  # set to True to forecast example questions rather than the tournament questions
+SUBMIT_PREDICTION = False # set to True to publish your predictions to Metaculus
+USE_EXAMPLE_QUESTIONS = True # set to True to forecast example questions rather than the tournament questions
 NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
-SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = True
+SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False 
 
 # Environment variables
 # You only need *either* Exa or Perplexity or AskNews keys for online research
@@ -76,7 +76,7 @@ TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (578, 578),  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    (578, 578)  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
     # (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
     # (38195, 38880), # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
@@ -248,6 +248,20 @@ async def call_llm(prompt: str, model: str = "anthropic/claude-sonnet-4.5", temp
         max_retries=5,
     )
 
+    print(f"call_llm: model={model}")
+    # For models that don't support temperature
+    if model == "o4-mini-deep-research" or model == "anthropic/claude-sonnet-4.5":
+        async with llm_rate_limiter:
+            response = await client.chat.completions.create(
+                model=model,
+                messages=[{"role": "user", "content": prompt}],
+                stream=False,
+            )
+            answer = response.choices[0].message.content
+            if answer is None:
+                raise ValueError("No answer returned from LLM")
+            return answer
+
     async with llm_rate_limiter:
         response = await client.chat.completions.create(
             model=model,
@@ -269,15 +283,15 @@ def run_research(question: str) -> str:
     #     research = call_asknews(question)
     # elif EXA_API_KEY:
     #     research = call_exa_smart_searcher(question)
-    if PERPLEXITY_API_KEY:
-        print(f"run_research: Using Perplexity for research question: {question}")
-        print("########################\nRunning research...\n########################")
-        # We can change query to include more details if needed
-        # query = f"{question_details['title']}\nResolution Criteria: {question_details['resolution_criteria']}\n{question_details['fine_print']}\nToday is {today}
-        research = call_perplexity(question)
+    # if PERPLEXITY_API_KEY:
+    #     print(f"run_research: Using Perplexity for research question: {question}")
+    #     print("########################\nRunning research...\n########################")
+    #     # We can change query to include more details if needed
+    #     # query = f"{question_details['title']}\nResolution Criteria: {question_details['resolution_criteria']}\n{question_details['fine_print']}\nToday is {today}
+    #     research = call_perplexity(question)
     
-    elif OPENAI_API_KEY:
-        print(f"run_research: Using Perplexity for research question: {question}")
+    if OPENAI_API_KEY:
+        print(f"run_research: Using OpenAI for research question: {question}")
         print("########################\nRunning research...\n########################")
         # We can change query to include more details if needed
         # query = f"{question_details['title']}\nResolution Criteria: {question_details['resolution_criteria']}\n{question_details['fine_print']}\nToday is {today}
@@ -1014,14 +1028,18 @@ async def forecast_individual_question(
     num_runs_per_question: int,
     skip_previously_forecasted_questions: bool,
 ) -> str:
+    print(f"forecasting_individual_question: post_id={post_id}, question_id={question_id}")
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
     title = question_details["title"]
     question_type = question_details["type"]
+    print(f"forecasting_individual_question: question_details={question_details}")
+    print(f"forecasting_individual_question: title={title}")
 
     summary_of_forecast = ""
     summary_of_forecast += f"-----------------------------------------------\nQuestion: {title}\n"
     summary_of_forecast += f"URL: https://www.metaculus.com/questions/{post_id}/\n"
+    print(f"forecasting_individual_question: summary_of_forecast so far:\n{summary_of_forecast}")
 
     if question_type == "multiple_choice":
         options = question_details["options"]
