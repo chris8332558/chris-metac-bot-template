@@ -44,7 +44,7 @@ with this file it may be worth double checking key components locally.
 # Constants
 SUBMIT_PREDICTION = False # set to True to publish your predictions to Metaculus
 USE_EXAMPLE_QUESTIONS = True # set to True to forecast example questions rather than the tournament questions
-NUM_RUNS_PER_QUESTION = 5  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
+NUM_RUNS_PER_QUESTION = 1  # The median forecast is taken between NUM_RUNS_PER_QUESTION runs
 SKIP_PREVIOUSLY_FORECASTED_QUESTIONS = False 
 
 # Environment variables
@@ -76,9 +76,9 @@ TOURNAMENT_ID = FALL_2025_AI_BENCHMARKING_ID
 
 # The example questions can be used for testing your bot. (note that question and post id are not always the same)
 EXAMPLE_QUESTIONS = [  # (question_id, post_id)
-    (578, 578)  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
+    # (578, 578)  # Human Extinction - Binary - https://www.metaculus.com/questions/578/human-extinction-by-2100/
     # (14333, 14333),  # Age of Oldest Human - Numeric - https://www.metaculus.com/questions/14333/age-of-oldest-human-as-of-2100/
-    # (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
+    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice - https://www.metaculus.com/questions/22427/number-of-new-leading-ai-labs/
     # (38195, 38880), # Number of US Labor Strikes Due to AI in 2029 - Discrete - https://www.metaculus.com/c/diffusion-community/38880/how-many-us-labor-strikes-due-to-ai-in-2029/
 ]
 
@@ -220,7 +220,7 @@ def get_post_details(post_id: int) -> dict:
     Get all details about a post from the Metaculus API.
     """
     url = f"{API_BASE_URL}/posts/{post_id}/"
-    print(f"Getting details for {url}")
+    print(f"\nGetting details for {url}\n")
     response = requests.get(
         url,
         **AUTH_HEADERS,  # type: ignore
@@ -248,7 +248,6 @@ async def call_llm(prompt: str, model: str = "anthropic/claude-sonnet-4.5", temp
         max_retries=5,
     )
 
-    print(f"call_llm: model={model}")
     # For models that don't support temperature
     if model == "o4-mini-deep-research" or model == "anthropic/claude-sonnet-4.5":
         async with llm_rate_limiter:
@@ -277,8 +276,16 @@ async def call_llm(prompt: str, model: str = "anthropic/claude-sonnet-4.5", temp
 
 def run_research(question: str) -> str:
     research = ""
+    model = "o4-mini-deep-research"
+    print("="*20)
+    print("Running Research...")
+    print(f"Model: OpenRouter ({model})")
+    print(f"Research Question: '{question}'")
+    print("="*20)
+
+    # Asknews currently exceed rate limits
     # if ASKNEWS_CLIENT_ID and ASKNEWS_SECRET:
-    #     print(f"run_research: Using AskNews for research question: {question}")
+    #     print(f"Using AskNews for research question: {question}")
     #     print("########################\nRunning research...\n########################")
     #     research = call_asknews(question)
     # elif EXA_API_KEY:
@@ -291,15 +298,30 @@ def run_research(question: str) -> str:
     #     research = call_perplexity(question)
     
     if OPENAI_API_KEY:
-        print(f"run_research: Using OpenAI for research question: {question}")
-        print("########################\nRunning research...\n########################")
         # We can change query to include more details if needed
         # query = f"{question_details['title']}\nResolution Criteria: {question_details['resolution_criteria']}\n{question_details['fine_print']}\nToday is {today}
-        research += asyncio.run(call_llm(prompt=question, model='o4-mini-deep-research', temperature=0.7))
+        query = f"""
+        You are an assistant to a superforecaster.
+                The superforecaster will give you a question they intend to forecast on.
+                To be a great assistant, you generate a concise but detailed rundown of the most relevant news.
+                You do not produce forecasts yourself.
+        The question is: {question}
+        This question's outcome will be determined by the specific criteria below:
+                This question resolves as the number of new AI labs that become leading labs within 2 years of their founding and before 2030.
+                For the purposes of this question:
+                    - A “new” AI lab is one that was founded after question launch.
+                    - A “leading” AI lab is a top 5 lab based on model ELO,* as measured by [Chatbot Arena’s](https://chat.lmsys.org/?leaderboard) ELO rating. As of April 15, 2024, for example, the leading AI labs by this metric are OpenAI, Anthropic, Google DeepMind, Cohere, and Mistral AI.
+                    - A lab’s founding date will be taken to be the “Founded” date quoted on its Wikipedia page. If a lab doesn’t have a Wikipedia page, or that page doesn’t quote a founded date, then Metaculus admins will turn to [other sources](https://www.metaculus.com/help/faq/#definitions).<br /><br />
+                    - To be clear, we are considering the top five distinct labs that have the highest ranked models; we are not just considering the labs of the top five models, which could be less than five.
+        Fine Print: If Chatbot Arena is no longer maintained, or becomes obsolete because LLMs are no longer the frontier paradigm in AI, then Metaculus admins will find an alternative way to define “leading lab”.
+        """
+        research += asyncio.run(call_llm(prompt=question, model=model, temperature=0.7))
     else:
         research = "No research done"
 
-    print(f"########################\nResearch Found:\n{research}\n########################")
+    print(f"\n======Research Start======")
+    print(research)
+    print(f"\n======Research End========")
 
     return research
 
@@ -1028,18 +1050,21 @@ async def forecast_individual_question(
     num_runs_per_question: int,
     skip_previously_forecasted_questions: bool,
 ) -> str:
-    print(f"forecasting_individual_question: post_id={post_id}, question_id={question_id}")
     post_details = get_post_details(post_id)
     question_details = post_details["question"]
     title = question_details["title"]
     question_type = question_details["type"]
-    print(f"forecasting_individual_question: question_details={question_details}")
-    print(f"forecasting_individual_question: title={title}")
+    print(f"\n======Forecasting Individual Question======")
+    print(f"Post Id={post_id}, Question Id={question_id}")
+    print(f"Title={title}")
+    print(f"Type={question_type}\n\n")
+    print(f"Resolution Criteria: {question_details['resolution_criteria']}")
+    print(f"Fine Print: {question_details['fine_print']}")
+    # print(f"        question_details={question_details}")
 
     summary_of_forecast = ""
     summary_of_forecast += f"-----------------------------------------------\nQuestion: {title}\n"
     summary_of_forecast += f"URL: https://www.metaculus.com/questions/{post_id}/\n"
-    print(f"forecasting_individual_question: summary_of_forecast so far:\n{summary_of_forecast}")
 
     if question_type == "multiple_choice":
         options = question_details["options"]
@@ -1071,9 +1096,12 @@ async def forecast_individual_question(
     else:
         raise ValueError(f"Unknown question type: {question_type}")
 
-    print(f"-----------------------------------------------\nPost {post_id} Question {question_id}:\n")
-    print(f"Forecast for post {post_id} (question {question_id}):\n{forecast}")
-    print(f"Comment for post {post_id} (question {question_id}):\n{comment}")
+    print(f"-----------------------------------------------")
+    print(f"\nPost {post_id} Question {question_id}:")
+    print(f"\n======Forecast for post {post_id} (question {question_id})======")
+    print(forecast)
+    print(f"\n======Comment for post {post_id} (question {question_id})======")
+    print(comment)
 
     if question_type == "numeric" or question_type == "discrete":
         summary_of_forecast += f"Forecast: {str(forecast)[:200]}...\n"
@@ -1108,7 +1136,7 @@ async def forecast_questions(
         for question_id, post_id in open_question_id_post_id
     ]
     forecast_summaries = await asyncio.gather(*forecast_tasks, return_exceptions=True)
-    print("\n", "#" * 100, "\nForecast Summaries\n", "#" * 100)
+    print("\n","#" * 100, "\nForecast Summaries\n","#" * 100)
 
     errors = []
     for question_id_post_id, forecast_summary in zip(
@@ -1139,7 +1167,13 @@ if __name__ == "__main__":
     else:
         open_question_id_post_id = get_open_question_ids_from_tournament()
 
+    print("="*60)
     print(f"open_question_id_post_id: {open_question_id_post_id}")
+    print(f"SUBMIT_PREDICTION: {SUBMIT_PREDICTION}")
+    print(f"NUM_RUNS_PER_QUESTION: {NUM_RUNS_PER_QUESTION}")
+    print(f"SKIP_PREVIOUSLY_FORECASTED_QUESTIONS: {SKIP_PREVIOUSLY_FORECASTED_QUESTIONS}")
+    print("="*60)
+
     asyncio.run(
         forecast_questions(
             open_question_id_post_id,
