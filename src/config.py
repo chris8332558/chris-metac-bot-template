@@ -31,9 +31,9 @@ class APIConfig:
 class BotConfig:
     """Bot behavior configuration."""
 
-    submit_prediction: bool = False
+    submit_prediction: bool = True
     use_example_questions: bool = False
-    num_runs_per_question: int = 1
+    num_runs_per_question: int = 3
     skip_previously_forecasted_questions: bool = True 
     concurrent_requests_limit: int = 5
     default_model: str = "anthropic/claude-sonnet-4.5"
@@ -60,7 +60,7 @@ class LLMConfig:
     local_llm_max_tokens: int = 7000
     local_llm_temperature: float = 0.2
     local_llm_max_retries: int = 3
-    local_llm_no_think: bool = True 
+    local_llm_no_think: bool = False
 
 @dataclass
 class MetaculusConfig:
