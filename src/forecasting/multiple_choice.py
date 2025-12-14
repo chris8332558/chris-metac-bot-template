@@ -9,7 +9,7 @@ import logging
 from typing import Dict, Any, Tuple, List
 
 from ..prompts import MULTIPLE_CHOICE_PROMPT_TEMPLATE
-from ..utils import LLMClient, extract_option_probabilities
+from ..utils import BaseLLMClient, extract_option_probabilities
 from ..research import ResearchProvider
 
 logger = logging.getLogger(__name__)
@@ -20,14 +20,14 @@ class MultipleChoiceForecaster:
 
     def __init__(
         self,
-        llm_client: LLMClient,
+        llm_client: BaseLLMClient,
         research_provider: ResearchProvider,
     ):
         """
         Initialize the multiple choice forecaster.
 
         Args:
-            llm_client: LLM client for making predictions
+            llm_client: LLM client for making predictions (can be any BaseLLMClient)
             research_provider: Research provider for gathering information
         """
         self.llm_client = llm_client

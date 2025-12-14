@@ -11,7 +11,7 @@ from typing import Dict, Any, Tuple, List, Optional
 import numpy as np
 
 from ..prompts import NUMERIC_PROMPT_TEMPLATE
-from ..utils import LLMClient, extract_percentiles
+from ..utils import BaseLLMClient, extract_percentiles
 from ..research import ResearchProvider
 from ..config import QuestionType
 
@@ -23,14 +23,14 @@ class NumericForecaster:
 
     def __init__(
         self,
-        llm_client: LLMClient,
+        llm_client: BaseLLMClient,
         research_provider: ResearchProvider,
     ):
         """
         Initialize the numeric forecaster.
 
         Args:
-            llm_client: LLM client for making predictions
+            llm_client: LLM client for making predictions (can be any BaseLLMClient)
             research_provider: Research provider for gathering information
         """
         self.llm_client = llm_client

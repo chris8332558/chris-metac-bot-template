@@ -9,7 +9,7 @@ from typing import Any, Dict, Optional
 
 from .base import ResearchProvider
 from ..config import bot_config
-from ..utils import LLMClient
+from ..utils import BaseLLMClient, LLMClient, LocalLLMClient
 from ..prompts import RESEARCH_SYSTEM_PROMPT
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ class LLMResearchProvider(ResearchProvider):
 
     def __init__(
         self,
-        llm_client: Optional[LLMClient] = None,
+        llm_client: Optional[BaseLLMClient] = None,
         model: Optional[str] = None,
         temperature: Optional[float] = None,
     ):
@@ -28,7 +28,7 @@ class LLMResearchProvider(ResearchProvider):
         Initialize the LLM research provider.
 
         Args:
-            llm_client: LLM client instance. If None, creates a new one.
+            llm_client: LLM client instance (can be any BaseLLMClient). If None, creates a new LLMClient.
             model: Model to use for research. If None, uses config default.
             temperature: Temperature for research. If None, uses config default.
         """

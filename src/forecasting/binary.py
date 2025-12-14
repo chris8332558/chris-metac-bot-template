@@ -11,7 +11,7 @@ from typing import Dict, Any, Tuple
 import numpy as np
 
 from ..prompts import BINARY_PROMPT_TEMPLATE
-from ..utils import LLMClient, extract_probability_percentage
+from ..utils import BaseLLMClient, extract_probability_percentage
 from ..research import ResearchProvider
 
 logger = logging.getLogger(__name__)
@@ -22,14 +22,14 @@ class BinaryForecaster:
 
     def __init__(
         self,
-        llm_client: LLMClient,
+        llm_client: BaseLLMClient,
         research_provider: ResearchProvider,
     ):
         """
         Initialize the binary forecaster.
 
         Args:
-            llm_client: LLM client for making predictions
+            llm_client: LLM client for making predictions (can be any BaseLLMClient)
             research_provider: Research provider for gathering information
         """
         self.llm_client = llm_client

@@ -1,8 +1,9 @@
 """
 Configuration and Constants for the Forecasting Bot
 """
+import logging
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 import dotenv
@@ -23,6 +24,7 @@ class APIConfig:
     asknews_client_id: Optional[str] = os.getenv("ASKNEWS_CLIENT_ID")
     asknews_secret: Optional[str] = os.getenv("ASKNEWS_SECRET")
     exa_api_key: Optional[str] = os.getenv("EXA_API_KEY")
+    local_llm_base_url: Optional[str] = os.getenv("LOCAL_LLM_BASE_URL")
 
 
 @dataclass
@@ -38,6 +40,47 @@ class BotConfig:
     default_temperature: float = 0.3
     research_model: str = "o4-mini-deep-research"
     research_temperature: float = 0.7
+
+
+@dataclass
+class LoggingConfig:
+    """Logging configuration."""
+
+    # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    log_level: str = "INFO"
+    log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+    # Whether to log to file
+    log_to_file: bool = False
+    log_file_path: str = "forecasting_bot.log"
+
+
+@dataclass
+class LLMConfig:
+    """LLM client configuration."""
+
+    # API-based LLM settings
+    max_retries: int = 5
+    models_without_temperature: list[str] = field(
+        default_factory=lambda: ["o4-mini-deep-research", "anthropic/claude-sonnet-4.5"]
+    )
+
+    
+
+    # Local LLM settings
+    local_llm_model: str = "Qwen/Qwen3-32B"
+    local_llm_max_tokens: int = 7000
+    local_llm_temperature: float = 0.2
+    local_llm_max_retries: int = 3
+    local_llm_no_think: bool = True 
+
+    # def __post_init__(self):
+    #     """Initialize default values that can't be set in dataclass."""
+    #     if self.models_without_temperature is None:
+    #         self.models_without_temperature = [
+    #             "o4-mini-deep-research",
+    #             "anthropic/claude-sonnet-4.5"
+    #         ]
 
 
 @dataclass
@@ -83,4 +126,50 @@ class QuestionType:
 # Global configuration instances
 api_config = APIConfig()
 bot_config = BotConfig()
+logging_config = LoggingConfig()
+llm_config = LLMConfig()
 metaculus_config = MetaculusConfig()
+
+
+def setup_logging(level: Optional[str] = None, log_to_file: Optional[bool] = None):
+    """
+    Setup logging configuration.
+
+    This function can be called from anywhere to initialize logging.
+    It's automatically called by main.py, but can also be called manually
+    for standalone usage (e.g., in examples or tests).
+
+    Args:
+        level: Log level override (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        log_to_file: Whether to log to file (overrides config)
+    """
+    # Use provided level or fall back to config
+    log_level_str = level or logging_config.log_level
+    log_level = getattr(logging, log_level_str.upper(), logging.INFO)
+
+    # Use provided log_to_file or fall back to config
+    should_log_to_file = log_to_file if log_to_file is not None else logging_config.log_to_file
+
+    # Setup handlers
+    handlers = []
+
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter(logging_config.log_format))
+    handlers.append(console_handler)
+
+    # Optional file handler
+    if should_log_to_file:
+        file_handler = logging.FileHandler(logging_config.log_file_path)
+        file_handler.setFormatter(logging.Formatter(logging_config.log_format))
+        handlers.append(file_handler)
+
+    # Configure root logger
+    logging.basicConfig(
+        level=log_level,
+        format=logging_config.log_format,
+        handlers=handlers,
+        force=True,  # Override any existing configuration
+    )
+
+    logging.info(f"Logging configured: level={log_level_str}, log_to_file={should_log_to_file}")

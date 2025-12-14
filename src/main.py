@@ -10,7 +10,9 @@ from typing import List, Tuple
 from .config import (
     api_config,
     bot_config,
+    llm_config,
     metaculus_config,
+    setup_logging,
     EXAMPLE_QUESTIONS,
     QuestionType,
 )
@@ -21,29 +23,31 @@ from .forecasting import (
     NumericForecaster,
     MultipleChoiceForecaster,
 )
-from .utils import LLMClient
+from .utils import LLMClient, LocalLLMClient, RateLimiter
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
+setup_logging()
 logger = logging.getLogger(__name__)
 
 
 class ForecastingBot:
     """Main forecasting bot orchestrator."""
 
-    def __init__(self):
+    def __init__(self, use_local_llm_for_forecasting: bool = True):
         """Initialize the forecasting bot with all necessary components."""
-        # Initialize clients
+        # Initialize clients with shared rate limiter
         self.metaculus_client = MetaculusClient()
-        self.llm_client = LLMClient()
+        shared_rate_limiter = RateLimiter(bot_config.concurrent_requests_limit)
+        self.llm_client = LLMClient(rate_limiter=shared_rate_limiter)
+        self.local_llm_client = LocalLLMClient(rate_limiter=shared_rate_limiter)
 
         # Initialize research provider
         # Priority: OpenAI/OpenRouter > Perplexity > AskNews
-        if api_config.openai_api_key or api_config.openrouter_api_key:
-            logger.info("Using LLM research provider")
+        if api_config.openrouter_api_key:
+            logger.info("Using LLM research provider (openrouter)")
+            self.research_provider = LLMResearchProvider(self.llm_client)
+        elif api_config.openai_api_key:
+            logger.info("Using LLM research provider (openai)")
             self.research_provider = LLMResearchProvider(self.llm_client)
         elif api_config.perplexity_api_key:
             logger.info("Using Perplexity research provider")
@@ -52,16 +56,16 @@ class ForecastingBot:
             logger.info("Using LLM research provider (default)")
             self.research_provider = LLMResearchProvider(self.llm_client)
 
+        self.binary_forecaster = BinaryForecaster(self.llm_client, self.research_provider)
+        self.numeric_forecaster = NumericForecaster(self.llm_client, self.research_provider)
+        self.multiple_choice_forecaster = MultipleChoiceForecaster(self.llm_client, self.research_provider)
+
         # Initialize forecasters
-        self.binary_forecaster = BinaryForecaster(
-            self.llm_client, self.research_provider
-        )
-        self.numeric_forecaster = NumericForecaster(
-            self.llm_client, self.research_provider
-        )
-        self.multiple_choice_forecaster = MultipleChoiceForecaster(
-            self.llm_client, self.research_provider
-        )
+        if use_local_llm_for_forecasting:
+            self.binary_forecaster = BinaryForecaster(self.local_llm_client, self.research_provider)
+            self.numeric_forecaster = NumericForecaster(self.local_llm_client, self.research_provider)
+            self.multiple_choice_forecaster = MultipleChoiceForecaster(self.local_llm_client, self.research_provider)
+
 
     async def forecast_question(
         self,
@@ -173,11 +177,11 @@ class ForecastingBot:
         """
         logger.info(f"Starting forecast for {len(question_id_post_id_pairs)} questions")
 
+        # Create forecast tasks for all questions
         forecast_tasks = [
             self.forecast_question(question_id, post_id)
             for question_id, post_id in question_id_post_id_pairs
         ]
-
         forecast_summaries = await asyncio.gather(*forecast_tasks, return_exceptions=True)
 
         # Print summaries
@@ -217,7 +221,7 @@ async def main():
     logger.info("=" * 60)
 
     # Initialize bot
-    bot = ForecastingBot()
+    bot = ForecastingBot(use_local_llm_for_forecasting=True)
 
     # Get questions to forecast
     if bot_config.use_example_questions:
@@ -242,4 +246,6 @@ async def main():
 
 
 if __name__ == "__main__":
+    # python -m src.main
+    # poetry run python -m src.main
     asyncio.run(main())
