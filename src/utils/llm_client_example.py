@@ -35,11 +35,15 @@ async def example_local_client():
     client = LocalLLMClient()
 
     # Simple call with defaults from config
-    response = await client.call("What is 2+2?")
+    Q1 = "What is 2+2?"
+    response = await client.call(Q1)
+    print(f"Question: {Q1}")
     print(f"Local LLM Response: {response}")
 
     # Call with specific temperature
-    response = await client.call("Explain AI Forecasting", temperature=0.5)
+    Q2 = "Explain AI Forecasting"
+    response = await client.call(Q2, temperature=0.5)
+    print(f"Question: {Q2}")
     print(f"Local LLM Response: {response}")
 
     # Optional: Explicit cleanup when done

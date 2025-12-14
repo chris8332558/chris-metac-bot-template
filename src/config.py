@@ -32,27 +32,14 @@ class BotConfig:
     """Bot behavior configuration."""
 
     submit_prediction: bool = False
-    use_example_questions: bool = True
+    use_example_questions: bool = False
     num_runs_per_question: int = 1
-    skip_previously_forecasted_questions: bool = False
+    skip_previously_forecasted_questions: bool = True 
     concurrent_requests_limit: int = 5
     default_model: str = "anthropic/claude-sonnet-4.5"
     default_temperature: float = 0.3
     research_model: str = "o4-mini-deep-research"
     research_temperature: float = 0.7
-
-
-@dataclass
-class LoggingConfig:
-    """Logging configuration."""
-
-    # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    log_level: str = "INFO"
-    log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-
-    # Whether to log to file
-    log_to_file: bool = False
-    log_file_path: str = "forecasting_bot.log"
 
 
 @dataclass
@@ -65,23 +52,15 @@ class LLMConfig:
         default_factory=lambda: ["o4-mini-deep-research", "anthropic/claude-sonnet-4.5"]
     )
 
+    claude_connet_45 = "anthropic/claude-sonnet-4.5"
+    o4_mini_deep_search = "o4-mini-deep-research"
     
-
     # Local LLM settings
     local_llm_model: str = "Qwen/Qwen3-32B"
     local_llm_max_tokens: int = 7000
     local_llm_temperature: float = 0.2
     local_llm_max_retries: int = 3
     local_llm_no_think: bool = True 
-
-    # def __post_init__(self):
-    #     """Initialize default values that can't be set in dataclass."""
-    #     if self.models_without_temperature is None:
-    #         self.models_without_temperature = [
-    #             "o4-mini-deep-research",
-    #             "anthropic/claude-sonnet-4.5"
-    #         ]
-
 
 @dataclass
 class MetaculusConfig:
@@ -113,7 +92,6 @@ EXAMPLE_QUESTIONS = [
     # (38195, 38880),  # Number of US Labor Strikes Due to AI in 2029 - Discrete
 ]
 
-
 # Question type constants
 class QuestionType:
     """Question type constants."""
@@ -121,6 +99,20 @@ class QuestionType:
     NUMERIC = "numeric"
     DISCRETE = "discrete"
     MULTIPLE_CHOICE = "multiple_choice"
+
+@dataclass
+class LoggingConfig:
+    """Logging configuration."""
+
+    # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    log_level: str = "INFO"
+    log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+    # Whether to log to file
+    log_to_file: bool = False
+    log_file_path: str = "forecasting_bot.log"
+
+
 
 
 # Global configuration instances
