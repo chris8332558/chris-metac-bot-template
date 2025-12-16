@@ -209,6 +209,10 @@ logger.info("=" * 20)
 
 1. **Install dependencies** (same as before):
    ```bash
+   # Using poetry
+   poetry install
+
+   # Or using pip
    pip install forecasting-tools numpy requests asknews-sdk openai python-dotenv
    ```
 

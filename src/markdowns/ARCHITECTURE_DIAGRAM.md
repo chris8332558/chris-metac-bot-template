@@ -6,33 +6,33 @@
 ┌─────────────────────────────────────────────────────────┐
 │                    BaseLLMClient (ABC)                  │
 │                                                         │
-│  + __init__(rate_limiter)                              │
-│  + call(prompt, model, temperature) -> str  [abstract] │
+│  + __init__(rate_limiter)                               │
+│  + call(prompt, model, temperature) -> str  [abstract]  │
 └─────────────────────────────────────────────────────────┘
                           ▲
                           │
                           │ inherits
              ┌────────────┴────────────┐
              │                         │
-┌────────────┴─────────────┐  ┌───────┴──────────────────┐
+┌────────────┴─────────────┐  ┌────────┴─────────────────┐
 │      LLMClient           │  │   LocalLLMClient         │
 │                          │  │                          │
-│  Uses: AsyncOpenAI       │  │  Uses: aiohttp          │
-│  For: API-based LLMs     │  │  For: Local LLM servers │
-│  - OpenRouter            │  │  - vLLM                 │
-│  - OpenAI                │  │  - llama.cpp            │
-│  - Any OpenAI-compatible │  │  - Any local server     │
+│  Uses: AsyncOpenAI       │  │  Uses: aiohttp           │
+│  For: API-based LLMs     │  │  For: Local LLM servers  │
+│  - OpenRouter            │  │  - vLLM                  │
+│  - OpenAI                │  │  - llama.cpp             │
+│  - Any OpenAI-compatible │  │  - Any local server      │
 │                          │  │                          │
-│  Config:                 │  │  Config:                │
-│  - openrouter_api_key    │  │  - local_llm_base_url   │
-│  - openrouter_base_url   │  │  - local_llm_model      │
-│  - max_retries           │  │  - local_llm_max_tokens │
-│  - models_without_temp   │  │  - local_llm_max_retries│
+│  Config:                 │  │  Config:                 │
+│  - openrouter_api_key    │  │  - local_llm_base_url    │
+│  - openrouter_base_url   │  │  - local_llm_model       │
+│  - max_retries           │  │  - local_llm_max_tokens  │
+│  - models_without_temp   │  │  - local_llm_max_retries │
 │                          │  │                          │
-│  call(prompt, model,     │  │  call(prompt, model,    │
-│       temperature)       │  │       temperature)      │
-│    -> str                │  │    -> str               │
-└──────────────────────────┘  └─────────────────────────┘
+│  call(prompt, model,     │  │  call(prompt, model,     │
+│       temperature)       │  │       temperature)       │
+│    -> str                │  │    -> str                │
+└──────────────────────────┘  └──────────────────────────┘
 ```
 
 ## Usage in the Architecture
@@ -43,9 +43,9 @@
 │                                                          │
 │  Creates:                                                │
 │  - MetaculusClient                                       │
-│  - BaseLLMClient (LLMClient or LocalLLMClient)          │
+│  - BaseLLMClient (LLMClient or LocalLLMClient)           │
 │  - ResearchProvider                                      │
-│  - Forecasters (Binary, Numeric, MultipleChoice)        │
+│  - Forecasters (Binary, Numeric, MultipleChoice)         │
 └──────────────────────────────────────────────────────────┘
                           │
                           │ uses
@@ -54,10 +54,10 @@
 │              BaseLLMClient (polymorphic)                 │
 │                                                          │
 │  Passed to:                                              │
-│  ├─ LLMResearchProvider(llm_client: BaseLLMClient)      │
-│  ├─ BinaryForecaster(llm_client: BaseLLMClient)         │
-│  ├─ NumericForecaster(llm_client: BaseLLMClient)        │
-│  └─ MultipleChoiceForecaster(llm_client: BaseLLMClient) │
+│  ├─ LLMResearchProvider(llm_client: BaseLLMClient)       │
+│  ├─ BinaryForecaster(llm_client: BaseLLMClient)          │
+│  ├─ NumericForecaster(llm_client: BaseLLMClient)         │
+│  └─ MultipleChoiceForecaster(llm_client: BaseLLMClient)  │
 └──────────────────────────────────────────────────────────┘
                           │
                           │ can be
@@ -74,30 +74,30 @@
 ┌─────────────────────────────────────────────────────────┐
 │                    config.py                            │
 │                                                         │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ LLMConfig                                       │   │
-│  │  - max_retries                                  │   │
-│  │  - models_without_temperature                   │   │
-│  │  - local_llm_model                             │   │
-│  │  - local_llm_max_tokens                        │   │
-│  │  - local_llm_temperature                       │   │
-│  │  - local_llm_max_retries                       │   │
-│  │  - local_llm_no_think                          │   │
-│  └─────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ LLMConfig                                       │    │
+│  │  - max_retries                                  │    │
+│  │  - models_without_temperature                   │    │
+│  │  - local_llm_model                              │    │
+│  │  - local_llm_max_tokens                         │    │
+│  │  - local_llm_temperature                        │    │
+│  │  - local_llm_max_retries                        │    │
+│  │  - local_llm_no_think                           │    │
+│  └─────────────────────────────────────────────────┘    │
 │                                                         │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ APIConfig                                       │   │
-│  │  - openrouter_api_key                          │   │
-│  │  - openrouter_base_url                         │   │
-│  │  - local_llm_base_url                          │   │
-│  └─────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ APIConfig                                       │    │
+│  │  - openrouter_api_key                           │    │
+│  │  - openrouter_base_url                          │    │
+│  │  - local_llm_base_url                           │    │
+│  └─────────────────────────────────────────────────┘    │
 │                                                         │
-│  ┌─────────────────────────────────────────────────┐   │
-│  │ BotConfig                                       │   │
-│  │  - default_model                               │   │
-│  │  - default_temperature                         │   │
-│  │  - concurrent_requests_limit                   │   │
-│  └─────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────┐    │
+│  │ BotConfig                                       │    │
+│  │  - default_model                                │    │ 
+│  │  - default_temperature                          │    │
+│  │  - concurrent_requests_limit                    │    │
+│  └─────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────┘
                           │
                           │ used by
@@ -106,17 +106,17 @@
 │                 LLM Clients                             │
 │                                                         │
 │  LLMClient reads:                                       │
-│  - api_config.openrouter_*                             │
-│  - llm_config.max_retries                              │
-│  - llm_config.models_without_temperature               │
-│  - bot_config.default_model                            │
-│  - bot_config.default_temperature                      │
+│  - api_config.openrouter_*                              │
+│  - llm_config.max_retries                               │
+│  - llm_config.models_without_temperature                │
+│  - bot_config.default_model                             │
+│  - bot_config.default_temperature                       │
 │                                                         │
 │  LocalLLMClient reads:                                  │
-│  - api_config.local_llm_base_url                       │
-│  - llm_config.local_llm_*                              │
-│  - bot_config.default_model (if not specified)         │
-│  - bot_config.default_temperature (if not specified)   │
+│  - api_config.local_llm_base_url                        │
+│  - llm_config.local_llm_*                               │
+│  - bot_config.default_model (if not specified)          │
+│  - bot_config.default_temperature (if not specified)    │
 └─────────────────────────────────────────────────────────┘
 ```
 

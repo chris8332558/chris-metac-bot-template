@@ -106,6 +106,28 @@ await bot.forecast_questions([(question_id, post_id)])
 
 ## Adding New Features
 
+### Adding New LLM Client
+
+1. In `src/utils/llm_client.py`, Inferite from `LLMBaseClient`
+2. Implement `call()` method
+3. Register in `src/research/__init__.py`
+
+```python
+class CustomLLMClient(BaseLLMClient):
+    def __init__():
+        # ...
+
+    async def call(
+        self,
+        prompt: str,
+        model: Optional[str] = None,
+        temperature: Optional[float] = None,
+    ) -> str:
+        # ...
+        return answer
+```
+
+
 ### Adding a New Research Provider
 
 1. Create a new file in `src/research/`
@@ -119,8 +141,19 @@ from .base import ResearchProvider
 
 class CustomResearchProvider(ResearchProvider):
     async def conduct_research(self, question, question_details=None):
-        # Your implementation
+        # New strategy to research
         return research_results
+```
+
+### Use Different Forecasting Methods
+
+Implement the Forecasters in the `src/forecasting/*.py`. 
+
+Example:
+```python
+async def _get_single_forecast(self, content: str) -> Tuple[float, str]:
+    # New strategy to forecast
+    return probability, comment
 ```
 
 ### Adding a New Question Type

@@ -52,7 +52,7 @@ class LLMConfig:
         default_factory=lambda: ["o4-mini-deep-research", "anthropic/claude-sonnet-4.5"]
     )
 
-    claude_connet_45 = "anthropic/claude-sonnet-4.5"
+    claude_sonnet_45 = "anthropic/claude-sonnet-4.5"
     o4_mini_deep_search = "o4-mini-deep-research"
     
     # Local LLM settings

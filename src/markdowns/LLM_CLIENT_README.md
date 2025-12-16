@@ -33,6 +33,9 @@ class LLMConfig:
     max_retries: int = 5
     models_without_temperature: list = ["o4-mini-deep-research", "anthropic/claude-sonnet-4.5"]
 
+    claude_sonnet_45 = "anthropic/claude-sonnet-4.5"
+    o4_mini_deep_search = "o4-mini-deep-research"
+
     # Local LLM settings
     local_llm_model: str = "Qwen/Qwen3-32B"
     local_llm_max_tokens: int = 7000

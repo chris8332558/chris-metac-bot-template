@@ -188,8 +188,8 @@ response = await client.call("What is 2+2?")
 ```python
 from src.utils import LocalLLMClient
 
-async with LocalLLMClient() as client:
-    response = await client.call("What is 2+2?")
+local_llm_client = LLMClient()
+response = await local_llm_client.call("What is 2+2?")
 ```
 
 ### Switching Between Clients (No Code Changes Needed)
@@ -203,8 +203,8 @@ api_client = LLMClient()
 research_provider = LLMResearchProvider(llm_client=api_client)
 
 # OR use local (same interface!)
-async with LocalLLMClient() as local_client:
-    research_provider = LLMResearchProvider(llm_client=local_client)
+local_llm_client = LLMClient()
+research_provider = LLMResearchProvider(llm_client=local_llm_client)
 ```
 
 ### In Forecasters
@@ -218,8 +218,8 @@ api_client = LLMClient()
 forecaster = BinaryForecaster(api_client, research_provider)
 
 # With local client
-async with LocalLLMClient() as local_client:
-    forecaster = BinaryForecaster(local_client, research_provider)
+local_llm_client = LocalLLMClient()
+forecaster = BinaryForecaster(local_llm_client, research_provider)
 ```
 
 ## Migration Guide
@@ -242,9 +242,7 @@ from src.utils import LLMClient, LocalLLMClient
 client = LLMClient()
 
 # Option 2: Use local LLM (new!)
-async with LocalLLMClient() as client:
-    # Works with same interface
-    pass
+local_llm_client = LocalLLMClient()
 ```
 
 ### For Research Providers
@@ -256,8 +254,7 @@ async with LocalLLMClient() as client:
 research = LLMResearchProvider(llm_client=LLMClient())
 
 # Also works with local client
-async with LocalLLMClient() as local:
-    research = LLMResearchProvider(llm_client=local)
+research = LLMResearchProvider(llm_client=LocalLLMClient())
 ```
 
 ### For Forecasters
@@ -269,8 +266,7 @@ async with LocalLLMClient() as local:
 forecaster = BinaryForecaster(LLMClient(), research_provider)
 
 # Also works with local client
-async with LocalLLMClient() as local:
-    forecaster = BinaryForecaster(local, research_provider)
+forecaster = BinaryForecaster(LocalLLMClient(), research_provider)
 ```
 
 ## Key Benefits

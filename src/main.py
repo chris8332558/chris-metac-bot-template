@@ -56,11 +56,11 @@ class ForecastingBot:
             logger.info("Using LLM research provider (default)")
             self.research_provider = LLMResearchProvider(self.llm_client)
 
+        # Initialize forecasters
         self.binary_forecaster = BinaryForecaster(self.llm_client, self.research_provider)
         self.numeric_forecaster = NumericForecaster(self.llm_client, self.research_provider)
         self.multiple_choice_forecaster = MultipleChoiceForecaster(self.llm_client, self.research_provider)
 
-        # Initialize forecasters
         if use_local_llm_for_forecasting:
             self.binary_forecaster = BinaryForecaster(self.local_llm_client, self.research_provider)
             self.numeric_forecaster = NumericForecaster(self.local_llm_client, self.research_provider)
@@ -177,12 +177,20 @@ class ForecastingBot:
         """
         logger.info(f"Starting forecast for {len(question_id_post_id_pairs)} questions")
 
-        # Create forecast tasks for all questions
-        forecast_tasks = [
-            self.forecast_question(question_id, post_id)
-            for question_id, post_id in question_id_post_id_pairs
-        ]
-        forecast_summaries = await asyncio.gather(*forecast_tasks, return_exceptions=True)
+        # If using LocalLLMClient, wrap in async context manager
+        if isinstance(self.llm_client, LocalLLMClient):
+            async with self.llm_client:
+                forecast_tasks = [
+                    self.forecast_question(question_id, post_id)
+                    for question_id, post_id in question_id_post_id_pairs
+                ]
+                forecast_summaries = await asyncio.gather(*forecast_tasks, return_exceptions=True)
+        else:
+            forecast_tasks = [
+                self.forecast_question(question_id, post_id)
+                for question_id, post_id in question_id_post_id_pairs
+            ]
+            forecast_summaries = await asyncio.gather(*forecast_tasks, return_exceptions=True)
 
         # Print summaries
         print("\n" + "#" * 100)
