@@ -99,6 +99,9 @@ class LLMClient(BaseLLMClient):
         self.base_url = base_url or api_config.openrouter_base_url
         self.api_key = api_key or api_config.openrouter_api_key
 
+        # self.base_url = api_config.local_llm_base_url
+        # self.api_key = None
+
         self.client = AsyncOpenAI(
             base_url=self.base_url,
             api_key=self.api_key,
@@ -130,12 +133,30 @@ class LLMClient(BaseLLMClient):
 
         if temperature is None:
             temperature = bot_config.default_temperature
+        
+        # If using Fredrick's local llm model
+        if self.base_url == api_config.local_llm_base_url:
+            model = llm_config.local_llm_model
+            use_think_str = "No Think" if llm_config.local_llm_no_think else "Think"
+            logger.info(f"Calling Local LLM with model={model} ({use_think_str}), temperature={temperature}")
 
-        logger.debug(f"Calling API LLM with model={model}, temperature={temperature}")
+            # Add no_think directive if configured
+            if llm_config.local_llm_no_think:
+                prompt += "\n\\no_think\n"
+
+        logger.info(f"Calling API LLM with model={model}, temperature={temperature}")
 
         async with self.rate_limiter:
             # Some models don't support temperature parameter
-            if model in llm_config.models_without_temperature:
+            if self.base_url == api_config.local_llm_base_url:
+                response = await self.client.chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=llm_config.local_llm_max_tokens,
+                    temperature=temperature,
+                    stream=False,
+                )
+            elif model in llm_config.models_without_temperature:
                 response = await self.client.chat.completions.create(
                     model=model,
                     messages=[{"role": "user", "content": prompt}],
@@ -270,7 +291,7 @@ class LocalLLMClient(BaseLLMClient):
             "model": model,
             "messages": [{"role": "user", "content": prompt}],
             "max_tokens": llm_config.local_llm_max_tokens,
-            "temperature": temperature,
+            "temperature": llm_config.local_llm_temperature,
         }
 
         last_error = None

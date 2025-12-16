@@ -38,33 +38,24 @@ class ForecastingBot:
         # Initialize clients with shared rate limiter
         self.metaculus_client = MetaculusClient()
         shared_rate_limiter = RateLimiter(bot_config.concurrent_requests_limit)
-        self.llm_client = LLMClient(rate_limiter=shared_rate_limiter)
-        self.local_llm_client = LocalLLMClient(rate_limiter=shared_rate_limiter)
+        self.llm_client = LLMClient(rate_limiter=shared_rate_limiter, base_url=api_config.openrouter_base_url, api_key=api_config.openrouter_api_key)
+        self.local_llm_client = LLMClient(rate_limiter=shared_rate_limiter, base_url=api_config.local_llm_base_url)
+        forecasting_client = self.local_llm_client if use_local_llm_for_forecasting else self.llm_client
+        # self.local_llm_client = LocalLLMClient(rate_limiter=shared_rate_limiter) # Fredrick's local llm is OpenAI compatible
 
         # Initialize research provider
         # Priority: OpenAI/OpenRouter > Perplexity > AskNews
-        if api_config.openrouter_api_key:
-            logger.info("Using LLM research provider (openrouter)")
-            self.research_provider = LLMResearchProvider(self.llm_client)
-        elif api_config.openai_api_key:
-            logger.info("Using LLM research provider (openai)")
+        if api_config.openrouter_api_key or api_config.openai_api_key:
+            logger.info("Using LLM research provider")
             self.research_provider = LLMResearchProvider(self.llm_client)
         elif api_config.perplexity_api_key:
             logger.info("Using Perplexity research provider")
             self.research_provider = PerplexityResearchProvider()
-        else:
-            logger.info("Using LLM research provider (default)")
-            self.research_provider = LLMResearchProvider(self.llm_client)
 
         # Initialize forecasters
-        self.binary_forecaster = BinaryForecaster(self.llm_client, self.research_provider)
-        self.numeric_forecaster = NumericForecaster(self.llm_client, self.research_provider)
-        self.multiple_choice_forecaster = MultipleChoiceForecaster(self.llm_client, self.research_provider)
-
-        if use_local_llm_for_forecasting:
-            self.binary_forecaster = BinaryForecaster(self.local_llm_client, self.research_provider)
-            self.numeric_forecaster = NumericForecaster(self.local_llm_client, self.research_provider)
-            self.multiple_choice_forecaster = MultipleChoiceForecaster(self.local_llm_client, self.research_provider)
+        self.binary_forecaster = BinaryForecaster(forecasting_client, self.research_provider)
+        self.numeric_forecaster = NumericForecaster(forecasting_client, self.research_provider)
+        self.multiple_choice_forecaster = MultipleChoiceForecaster(forecasting_client, self.research_provider)
 
 
     async def forecast_question(

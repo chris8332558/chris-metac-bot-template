@@ -127,6 +127,16 @@ class CustomLLMClient(BaseLLMClient):
         return answer
 ```
 
+The `LLMClient` is using `AsyncOpenAI()` as a client, with `OpenRouter` as default:
+```python
+self.client = AsyncOpenAI(
+    base_url=self.base_url,
+    api_key=self.api_key,
+    max_retries=llm_config.max_retries,
+)
+```
+We can use the `call(prompt=prompt, model=model, temperatrue=temperature)` to call different models using the `AsyncOpenAI` client. 
+
 
 ### Adding a New Research Provider
 

@@ -31,10 +31,10 @@ class APIConfig:
 class BotConfig:
     """Bot behavior configuration."""
 
-    submit_prediction: bool = True
-    use_example_questions: bool = False
-    num_runs_per_question: int = 3
-    skip_previously_forecasted_questions: bool = True 
+    submit_prediction: bool = False
+    use_example_questions: bool = True
+    num_runs_per_question: int = 1
+    skip_previously_forecasted_questions: bool = False
     concurrent_requests_limit: int = 5
     default_model: str = "anthropic/claude-sonnet-4.5"
     default_temperature: float = 0.3
@@ -57,10 +57,10 @@ class LLMConfig:
     
     # Local LLM settings
     local_llm_model: str = "Qwen/Qwen3-32B"
-    local_llm_max_tokens: int = 7000
-    local_llm_temperature: float = 0.2
+    local_llm_max_tokens: int = 5000
+    # local_llm_temperature: float = 0.2
     local_llm_max_retries: int = 3
-    local_llm_no_think: bool = False
+    local_llm_no_think: bool = False 
 
 @dataclass
 class MetaculusConfig:
@@ -86,9 +86,9 @@ class MetaculusConfig:
 # Example questions for testing
 EXAMPLE_QUESTIONS = [
     # (question_id, post_id)
-    # (578, 578),  # Human Extinction - Binary
+    (578, 578),  # Human Extinction - Binary
     # (14333, 14333),  # Age of Oldest Human - Numeric
-    (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice
+    # (22427, 22427),  # Number of New Leading AI Labs - Multiple Choice
     # (38195, 38880),  # Number of US Labor Strikes Due to AI in 2029 - Discrete
 ]
 
@@ -163,5 +163,9 @@ def setup_logging(level: Optional[str] = None, log_to_file: Optional[bool] = Non
         handlers=handlers,
         force=True,  # Override any existing configuration
     )
+
+    # Suppress httpx noise
+    # logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpx").disabled = True
 
     logging.info(f"Logging configured: level={log_level_str}, log_to_file={should_log_to_file}")
