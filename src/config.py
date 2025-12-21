@@ -38,7 +38,7 @@ class BotConfig:
     concurrent_requests_limit: int = 5
     default_model: str = "anthropic/claude-sonnet-4.5"
     default_temperature: float = 0.3
-    research_model: str = "o4-mini-deep-research"
+    research_model: str = "openai/o4-mini-deep-research"
     research_temperature: float = 0.7
 
 
@@ -49,16 +49,17 @@ class LLMConfig:
     # API-based LLM settings
     max_retries: int = 5
     models_without_temperature: list[str] = field(
-        default_factory=lambda: ["o4-mini-deep-research", "anthropic/claude-sonnet-4.5"]
+        default_factory=lambda: ["openai/o4-mini-deep-research", "anthropic/claude-sonnet-4.5"]
     )
 
     claude_sonnet_45 = "anthropic/claude-sonnet-4.5"
-    o4_mini_deep_search = "o4-mini-deep-research"
+    claude_opus_45 = "anthropic/claude-opus-4.5"
+    o4_mini_deep_search = "openai/o4-mini-deep-research"
     
     # Local LLM settings
     local_llm_model: str = "Qwen/Qwen3-32B"
     local_llm_max_tokens: int = 5000
-    # local_llm_temperature: float = 0.2
+    local_llm_temperature: float = 0.2
     local_llm_max_retries: int = 3
     local_llm_no_think: bool = False 
 

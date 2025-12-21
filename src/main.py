@@ -39,23 +39,22 @@ class ForecastingBot:
         self.metaculus_client = MetaculusClient()
         shared_rate_limiter = RateLimiter(bot_config.concurrent_requests_limit)
         self.llm_client = LLMClient(rate_limiter=shared_rate_limiter, base_url=api_config.openrouter_base_url, api_key=api_config.openrouter_api_key)
-        self.local_llm_client = LLMClient(rate_limiter=shared_rate_limiter, base_url=api_config.local_llm_base_url)
+        self.local_llm_client = LocalLLMClient(rate_limiter=shared_rate_limiter)
         forecasting_client = self.local_llm_client if use_local_llm_for_forecasting else self.llm_client
-        # self.local_llm_client = LocalLLMClient(rate_limiter=shared_rate_limiter) # Fredrick's local llm is OpenAI compatible
 
         # Initialize research provider
         # Priority: OpenAI/OpenRouter > Perplexity > AskNews
         if api_config.openrouter_api_key or api_config.openai_api_key:
             logger.info("Using LLM research provider")
-            self.research_provider = LLMResearchProvider(self.llm_client)
+            self.research_provider = LLMResearchProvider(llm_client=self.llm_client, model=bot_config.research_model, temperature=bot_config.research_temperature)
         elif api_config.perplexity_api_key:
             logger.info("Using Perplexity research provider")
             self.research_provider = PerplexityResearchProvider()
 
         # Initialize forecasters
-        self.binary_forecaster = BinaryForecaster(forecasting_client, self.research_provider)
-        self.numeric_forecaster = NumericForecaster(forecasting_client, self.research_provider)
-        self.multiple_choice_forecaster = MultipleChoiceForecaster(forecasting_client, self.research_provider)
+        self.binary_forecaster = BinaryForecaster(llm_client=forecasting_client, research_provider=self.research_provider)
+        self.numeric_forecaster = NumericForecaster(llm_client=forecasting_client, research_provider=self.research_provider)
+        self.multiple_choice_forecaster = MultipleChoiceForecaster(llm_client=forecasting_client, research_provider=self.research_provider)
 
 
     async def forecast_question(

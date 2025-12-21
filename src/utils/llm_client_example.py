@@ -110,8 +110,8 @@ if __name__ == "__main__":
     # Note: These examples assume you have properly configured
     # environment variables in your .env file
 
-    asyncio.run(example_api_client())
-    # asyncio.run(example_local_client())
+    # asyncio.run(example_api_client())
+    asyncio.run(example_local_client())
     # asyncio.run(example_shared_interface())
     # asyncio.run(example_shared_rate_limiter())
 
