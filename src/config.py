@@ -31,9 +31,9 @@ class APIConfig:
 class BotConfig:
     """Bot behavior configuration."""
 
-    submit_prediction: bool = False 
-    use_example_questions: bool = True
-    num_runs_per_question: int = 1
+    submit_prediction: bool = True
+    use_example_questions: bool = False
+    num_runs_per_question: int = 3
     skip_previously_forecasted_questions: bool = True
     concurrent_requests_limit: int = 5
     default_model: str = "openai/gpt-5.2"
