@@ -39,7 +39,7 @@ class BotConfig:
     default_model: str = "anthropic/claude-sonnet-4.5"
     default_temperature: float = 0.3
     research_model: str = "openai/o4-mini-deep-research"
-    research_temperature: float = 0.7
+    research_temperature: float = 0.3
 
 
 @dataclass
