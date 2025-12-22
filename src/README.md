@@ -21,7 +21,8 @@ src/
 │   ├── numeric.py
 │   └── multiple_choice.py
 ├── prompts/               # Prompt templates
-│   └── templates.py
+│   ├── __init__.py
+│   └── templates.py       # All prompt templates including multi-step research
 ├── utils/                 # Utilities
 │   ├── llm_client.py     # LLM client wrapper
 │   └── extractors.py     # Response parsing
@@ -63,6 +64,66 @@ src/
 - DRY principle applied
 - Shared utilities extracted
 - No code duplication
+
+## Research Pipeline
+
+The LLMResearchProvider implements a comprehensive **5-step research pipeline** to provide high-quality research for forecasting:
+
+### Step 1: Question Classification
+- Analyzes the forecasting question to identify its primary field/domain
+- Examples: politics, economics, technology, international relations, public health, sports, etc.
+- Accepts optional field context from `question_details["field"]`
+- Validates and refines provided field context with sub-field categorization
+
+### Step 2: Entity Identification
+- Identifies key entities relevant to the question based on field classification
+- Searches for:
+  - Countries and regions
+  - Political leaders and government officials
+  - Organizations and institutions
+  - Companies and corporations
+  - International bodies and agreements
+  - Key individuals
+
+### Step 3: Entity Analysis
+- Analyzes characteristics and relationships of identified entities
+- Examines for each entity:
+  - Personality/character (for individuals) or institutional approach (for organizations)
+  - Typical approach to similar situations or tasks
+  - Relationships with other identified entities
+  - Current motivations and incentives
+  - Historical patterns of behavior
+
+### Step 4: News Search
+- Searches for 10-20 recent, high-quality news articles
+- Prioritizes:
+  - Recent news (within last few weeks/months)
+  - Authoritative sources
+  - Information relevant to resolution criteria
+  - Quantitative data and expert analysis
+- Covers:
+  - Specific question developments
+  - Entity-related news
+  - Field-specific trends
+  - Expert opinions and forecasts
+
+### Step 5: Final Report Generation
+- Synthesizes all research into a comprehensive report
+- Includes:
+  - Current state of affairs summary
+  - Key entities and their likely behaviors
+  - Recent trends and developments
+  - Important dates, deadlines, or milestones
+  - Expert opinions and market expectations
+  - Uncertainties and information gaps
+- Optimized as input for the Forecaster
+
+### Benefits of Multi-Step Research
+- **Structured**: Systematic approach ensures comprehensive coverage
+- **Transparent**: Each step logs progress for visibility
+- **Contextual**: Provides deep understanding of entities and relationships
+- **Current**: Focuses on recent, relevant news and developments
+- **Actionable**: Report format optimized for forecasting decisions
 
 ## Usage
 
@@ -155,6 +216,14 @@ class CustomResearchProvider(ResearchProvider):
         return research_results
 ```
 
+The `LLMResearchProvider` demonstrates a sophisticated multi-step approach:
+- Uses dedicated prompt templates for each research step
+- Orchestrates multiple LLM calls to build comprehensive research
+- Each step builds on previous results (classification → entities → analysis → news → report)
+- See the Research Pipeline section above for full details
+
+You can implement simpler single-step research providers (like `PerplexityResearchProvider`) or complex multi-step pipelines depending on your needs.
+
 ### Use Different Forecasting Methods
 
 Implement the Forecasters in the `src/forecasting/*.py`. 
@@ -191,3 +260,4 @@ python -m src.main
 4. **Scalability**: Easy to add new features without modifying existing code
 5. **Debugging**: Better logging and error messages
 6. **Collaboration**: Multiple developers can work on different modules
+7. **Enhanced Research**: Multi-step research pipeline provides comprehensive, structured analysis for better forecasting accuracy
